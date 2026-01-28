@@ -14,27 +14,6 @@ define( 'FLOW_EDITOR_VERSION', '0.1.0' );
 define( 'FLOW_EDITOR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FLOW_EDITOR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
-/**
- * Register admin menu page.
- */
-function flow_editor_admin_menu() {
-    add_submenu_page(
-        'themes.php',
-        __( 'Flow Editor', 'flow-editor' ),
-        __( 'Flow Editor', 'flow-editor' ),
-        'edit_theme_options',
-        'flow-editor',
-        'flow_editor_render_page'
-    );
-}
-add_action( 'admin_menu', 'flow_editor_admin_menu' );
-
-/**
- * Render the Flow Editor admin page.
- */
-function flow_editor_render_page() {
-    echo '<div id="flow-editor-root" class="flow-editor-fullscreen"></div>';
-}
 
 /**
  * Enqueue scripts and styles for the Block Editor.
@@ -83,18 +62,6 @@ function flow_editor_enqueue_editor_assets() {
     );
 }
 add_action( 'enqueue_block_editor_assets', 'flow_editor_enqueue_editor_assets' );
-
-/**
- * Add body class for fullscreen styling.
- */
-function flow_editor_admin_body_class( $classes ) {
-    $screen = get_current_screen();
-    if ( $screen && 'appearance_page_flow-editor' === $screen->id ) {
-        $classes .= ' flow-editor-page';
-    }
-    return $classes;
-}
-add_action( 'admin_body_class', 'flow_editor_admin_body_class' );
 
 /**
  * Register REST API endpoints.
