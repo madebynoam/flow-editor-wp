@@ -142,12 +142,13 @@ function flow_editor_save_positions( $request ) {
 }
 
 /**
- * Add Flow Editor link to Site Editor.
+ * Add Flow Editor link to editors (Site Editor and Post Editor).
  */
-function flow_editor_add_site_editor_link() {
+function flow_editor_add_editor_links() {
     global $pagenow;
 
-    if ( 'site-editor.php' !== $pagenow ) {
+    $editor_pages = array( 'site-editor.php', 'post.php', 'post-new.php' );
+    if ( ! in_array( $pagenow, $editor_pages, true ) ) {
         return;
     }
 
@@ -157,25 +158,91 @@ function flow_editor_add_site_editor_link() {
     <script>
     ( function() {
         wp.domReady( function() {
-            // Wait for Site Editor to fully load.
-            const checkInterval = setInterval( function() {
+            const flowEditorUrl = '<?php echo esc_url( $flow_editor_url ); ?>';
+
+            // For Site Editor - add button to header.
+            const checkSiteEditor = setInterval( function() {
                 const header = document.querySelector( '.edit-site-site-hub' );
                 if ( ! header ) return;
+                if ( header.querySelector( '.flow-editor-launch-button' ) ) {
+                    clearInterval( checkSiteEditor );
+                    return;
+                }
 
-                clearInterval( checkInterval );
+                clearInterval( checkSiteEditor );
 
-                // Create Flow Editor button.
                 const button = document.createElement( 'a' );
-                button.href = '<?php echo esc_url( $flow_editor_url ); ?>';
+                button.href = flowEditorUrl;
                 button.className = 'components-button is-tertiary flow-editor-launch-button';
                 button.textContent = 'Flow View';
                 button.style.cssText = 'margin-left: 8px; font-size: 12px;';
-
                 header.appendChild( button );
             }, 500 );
+
+            // For Post/Page Editor - add to View menu.
+            const checkPostEditor = setInterval( function() {
+                // Look for the options menu (three dots menu).
+                const menuContent = document.querySelector( '.editor-more-menu__content, .interface-more-menu-dropdown__content' );
+                if ( ! menuContent ) return;
+
+                // Find the VIEW section.
+                const menuGroups = menuContent.querySelectorAll( '.components-menu-group' );
+                if ( ! menuGroups.length ) return;
+
+                // Check if we already added our item.
+                if ( menuContent.querySelector( '.flow-editor-menu-item' ) ) {
+                    return;
+                }
+
+                clearInterval( checkPostEditor );
+
+                // Find the first menu group (VIEW section).
+                const viewGroup = menuGroups[0];
+                if ( ! viewGroup ) return;
+
+                // Create menu item.
+                const menuItem = document.createElement( 'a' );
+                menuItem.href = flowEditorUrl;
+                menuItem.className = 'components-button components-menu-item__button flow-editor-menu-item';
+                menuItem.setAttribute( 'role', 'menuitem' );
+                menuItem.innerHTML = `
+                    <span class="components-menu-item__item">
+                        Flow view
+                    </span>
+                    <span class="components-menu-item__info">See site as connected system</span>
+                `;
+                menuItem.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; width: 100%; padding: 6px 12px; text-decoration: none; color: inherit;';
+
+                viewGroup.appendChild( menuItem );
+            }, 300 );
+
+            // Re-check when menu opens (it re-renders).
+            document.addEventListener( 'click', function( e ) {
+                if ( e.target.closest( '.editor-header__settings, .edit-post-more-menu' ) ) {
+                    setTimeout( function() {
+                        const menuContent = document.querySelector( '.editor-more-menu__content, .interface-more-menu-dropdown__content' );
+                        if ( menuContent && ! menuContent.querySelector( '.flow-editor-menu-item' ) ) {
+                            const menuGroups = menuContent.querySelectorAll( '.components-menu-group' );
+                            const viewGroup = menuGroups[0];
+                            if ( viewGroup ) {
+                                const menuItem = document.createElement( 'a' );
+                                menuItem.href = flowEditorUrl;
+                                menuItem.className = 'components-button components-menu-item__button flow-editor-menu-item';
+                                menuItem.setAttribute( 'role', 'menuitem' );
+                                menuItem.innerHTML = `
+                                    <span class="components-menu-item__item">Flow view</span>
+                                    <span class="components-menu-item__info">See site as connected system</span>
+                                `;
+                                menuItem.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; width: 100%; padding: 6px 12px; text-decoration: none; color: inherit;';
+                                viewGroup.appendChild( menuItem );
+                            }
+                        }
+                    }, 100 );
+                }
+            });
         });
     })();
     </script>
     <?php
 }
-add_action( 'admin_footer', 'flow_editor_add_site_editor_link' );
+add_action( 'admin_footer', 'flow_editor_add_editor_links' );
