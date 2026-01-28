@@ -52,3 +52,19 @@
         background: #1e1e1e;
     }
 }
+
+.flow-editor-loading,
+.flow-editor-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    p {
+        color: #888;
+        font-size: 14px;
+    }
+}
+
+.flow-editor-error p {
+    color: #d63638;
+}
