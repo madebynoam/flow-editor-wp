@@ -37,5 +37,29 @@
     display: flex;
     flex-direction: column;
     color: #fff;
-    padding: 20px;
+}
+
+.flow-editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: #2d2d2d;
+    border-bottom: 1px solid #3d3d3d;
+
+    h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+    }
+}
+
+.flow-editor-back-link {
+    color: #a7aaad;
+    text-decoration: none;
+    font-size: 13px;
+
+    &:hover {
+        color: #fff;
+    }
 }

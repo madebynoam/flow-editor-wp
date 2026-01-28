@@ -2,13 +2,22 @@
  * Flow Editor - Main entry point.
  */
 import { createRoot } from '@wordpress/element';
+import Canvas from './components/Canvas';
 import './index.scss';
 
 const App = () => {
     return (
         <div className="flow-editor-app">
-            <h1>Flow Editor</h1>
-            <p>Canvas loading...</p>
+            <header className="flow-editor-header">
+                <h1>Flow Editor</h1>
+                <a
+                    href={ window.flowEditorData?.siteEditor || '#' }
+                    className="flow-editor-back-link"
+                >
+                    &larr; Site Editor
+                </a>
+            </header>
+            <Canvas />
         </div>
     );
 };

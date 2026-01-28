@@ -1,0 +1,54 @@
+// Canvas styles.
+
+.flow-editor-canvas {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+
+    .react-flow {
+        background: #1e1e1e;
+    }
+
+    .react-flow__node {
+        background: #2d2d2d;
+        border: 1px solid #3d3d3d;
+        border-radius: 4px;
+        padding: 10px 15px;
+        color: #fff;
+        font-size: 13px;
+
+        &.selected {
+            border-color: #007cba;
+            box-shadow: 0 0 0 2px rgba(0, 124, 186, 0.3);
+        }
+    }
+
+    .react-flow__edge-path {
+        stroke: #666;
+        stroke-width: 2;
+    }
+
+    .react-flow__controls {
+        background: #2d2d2d;
+        border: 1px solid #3d3d3d;
+        border-radius: 4px;
+
+        button {
+            background: #2d2d2d;
+            border-bottom-color: #3d3d3d;
+            color: #fff;
+
+            &:hover {
+                background: #3d3d3d;
+            }
+
+            svg {
+                fill: #fff;
+            }
+        }
+    }
+
+    .react-flow__background {
+        background: #1e1e1e;
+    }
+}
