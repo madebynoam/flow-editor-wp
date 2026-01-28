@@ -23,8 +23,9 @@ function organizeLayout( nodes ) {
     if ( ! nodes || nodes.length === 0 ) return {};
 
     const result = {};
-    const COL_WIDTH = 500;
-    const ROW_HEIGHT = SPACING_Y + 50; // Extra spacing for organize
+    const COL_WIDTH = 400;
+    const ROW_HEIGHT = SPACING_Y + 80;
+    const PAGES_PER_ROW = 3;
 
     // Group nodes by type
     const byType = { templatePart: [], pattern: [], page: [] };
@@ -37,19 +38,26 @@ function organizeLayout( nodes ) {
         }
     });
 
-    // Column 1: Template parts
+    // Row 1: Template parts (side by side)
     byType.templatePart.forEach( ( node, i ) => {
-        result[ node.id ] = { x: 50, y: 50 + i * ROW_HEIGHT };
+        result[ node.id ] = { x: 50 + i * COL_WIDTH, y: 50 };
     });
 
-    // Column 2: Patterns
+    // Row 2: Patterns (side by side)
+    const patternsY = 50 + ROW_HEIGHT;
     byType.pattern.forEach( ( node, i ) => {
-        result[ node.id ] = { x: 50 + COL_WIDTH, y: 50 + i * ROW_HEIGHT };
+        const col = i % 4;
+        const row = Math.floor( i / 4 );
+        result[ node.id ] = { x: 50 + col * COL_WIDTH, y: patternsY + row * ROW_HEIGHT };
     });
 
-    // Column 3: Pages
+    // Row 3+: Pages (grid layout)
+    const patternRows = Math.ceil( byType.pattern.length / 4 ) || 1;
+    const pagesY = patternsY + patternRows * ROW_HEIGHT;
     byType.page.forEach( ( node, i ) => {
-        result[ node.id ] = { x: 50 + COL_WIDTH * 2, y: 50 + i * ROW_HEIGHT };
+        const col = i % PAGES_PER_ROW;
+        const row = Math.floor( i / PAGES_PER_ROW );
+        result[ node.id ] = { x: 50 + col * COL_WIDTH, y: pagesY + row * ROW_HEIGHT };
     });
 
     return result;

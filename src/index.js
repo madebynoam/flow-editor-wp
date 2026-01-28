@@ -8,17 +8,48 @@ import { Button, Tooltip } from '@wordpress/components';
 import FlowCanvas from './components/FlowCanvas';
 import './index.scss';
 
+const HASH = '#flow-view';
+
 /**
  * Flow Editor Plugin - Toolbar button with fullscreen canvas.
  */
 const FlowEditorPlugin = () => {
-    const [ isOpen, setIsOpen ] = useState( false );
+    // Check URL hash on init
+    const [ isOpen, setIsOpen ] = useState( () => window.location.hash === HASH );
     const [ isVisible, setIsVisible ] = useState( false );
     const [ toolbarContainer, setToolbarContainer ] = useState( null );
 
+    // Open flow view and update URL
+    const handleOpen = useCallback( () => {
+        setIsOpen( true );
+        window.history.pushState( { flowView: true }, '', HASH );
+    }, [] );
+
+    // Close flow view and update URL
     const handleClose = useCallback( () => {
         setIsVisible( false );
-        setTimeout( () => setIsOpen( false ), 200 ); // Wait for fade out
+        setTimeout( () => {
+            setIsOpen( false );
+            // Remove hash without adding to history
+            if ( window.location.hash === HASH ) {
+                window.history.replaceState( {}, '', window.location.pathname + window.location.search );
+            }
+        }, 200 );
+    }, [] );
+
+    // Handle browser back/forward
+    useEffect( () => {
+        const handlePopState = () => {
+            if ( window.location.hash === HASH ) {
+                setIsOpen( true );
+            } else {
+                setIsVisible( false );
+                setTimeout( () => setIsOpen( false ), 200 );
+            }
+        };
+
+        window.addEventListener( 'popstate', handlePopState );
+        return () => window.removeEventListener( 'popstate', handlePopState );
     }, [] );
 
     // Trigger fade in after mount
@@ -81,7 +112,7 @@ const FlowEditorPlugin = () => {
             <Button
                 className="flow-editor-toolbar-button"
                 icon="screenoptions"
-                onClick={ () => setIsOpen( true ) }
+                onClick={ handleOpen }
                 aria-label="Flow View"
                 isPressed={ isOpen }
             />
