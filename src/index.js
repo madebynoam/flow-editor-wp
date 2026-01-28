@@ -95,19 +95,13 @@ const FlowEditorPlugin = () => {
 
             { isOpen && createPortal(
                 <div className={ `flow-editor-fullscreen ${ isVisible ? 'is-visible' : '' }` }>
-                    <div className="flow-editor-header">
-                        <button
-                            className="flow-editor-close"
-                            onClick={ handleClose }
-                            aria-label="Close Flow View"
-                        >
-                            <span className="dashicons dashicons-no-alt"></span>
-                        </button>
-                        <h1>Flow View</h1>
-                        <div className="flow-editor-header-hint">
-                            Press <kbd>Esc</kbd> to close
-                        </div>
-                    </div>
+                    <button
+                        className="flow-editor-close"
+                        onClick={ handleClose }
+                        aria-label="Close Flow View"
+                    >
+                        <span className="dashicons dashicons-no-alt"></span>
+                    </button>
                     <FlowCanvas />
                 </div>,
                 document.body

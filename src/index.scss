@@ -31,8 +31,6 @@
     bottom: 0;
     background: #f5f5f5;
     z-index: 100000; // Above editor UI
-    display: flex;
-    flex-direction: column;
     opacity: 0;
     transition: opacity 0.2s ease-out;
 
@@ -41,53 +39,23 @@
     }
 }
 
-.flow-editor-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px;
-    background: #fff;
-    border-bottom: 1px solid #e0e0e0;
-    flex-shrink: 0;
-
-    h1 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: #1e1e1e;
-    }
-}
-
-.flow-editor-header-hint {
-    flex: 1;
-    text-align: center;
-    font-size: 12px;
-    color: #757575;
-
-    kbd {
-        display: inline-block;
-        padding: 2px 6px;
-        background: #f0f0f0;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        font-family: inherit;
-        font-size: 11px;
-        box-shadow: 0 1px 0 #ccc;
-    }
-}
-
 .flow-editor-close {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     padding: 0;
-    background: transparent;
-    color: #757575;
-    border: none;
+    background: #fff;
+    color: #1e1e1e;
+    border: 1px solid #e0e0e0;
     border-radius: 4px;
     cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 
     .dashicons {
         font-size: 24px;
@@ -97,7 +65,6 @@
 
     &:hover {
         background: #f0f0f0;
-        color: #1e1e1e;
     }
 }
 

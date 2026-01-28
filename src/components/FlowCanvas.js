@@ -449,12 +449,14 @@ const FlowCanvas = () => {
         });
     }, [] );
 
-    // Reset to default layout
+    // Reset to default layout (with animation)
     const handleReset = useCallback( () => {
+        setIsAnimating( true );
         setNodePositions({});
         saveNodePositions({});
         setPan({ x: 100, y: 80 });
         setZoom( 0.5 );
+        setTimeout( () => setIsAnimating( false ), 600 );
     }, [] );
 
     // Organize nodes using force-directed layout
