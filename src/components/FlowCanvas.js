@@ -296,12 +296,31 @@ const MiniMap = ({ nodes, pan, zoom, containerSize }) => {
 const FlowCanvas = () => {
     const { pages, templates, templateParts, patterns, positions, loading, error } = useSiteData();
     const containerRef = useRef( null );
-    const [ pan, setPan ] = useState({ x: 100, y: 80 });
-    const [ zoom, setZoom ] = useState( 0.55 );
+
+    // Load view state from localStorage
+    const savedView = useMemo( () => {
+        try {
+            const saved = localStorage.getItem( 'flowEditorView' );
+            return saved ? JSON.parse( saved ) : null;
+        } catch { return null; }
+    }, [] );
+
+    const [ pan, setPan ] = useState( savedView?.pan || { x: 100, y: 80 } );
+    const [ zoom, setZoom ] = useState( savedView?.zoom || 0.55 );
     const [ isPanning, setIsPanning ] = useState( false );
     const [ draggingNode, setDraggingNode ] = useState( null );
     const [ nodePositions, setNodePositions ] = useState({});
     const [ statusFilter, setStatusFilter ] = useState( 'all' ); // all, publish, draft
+
+    // Save view state to localStorage when pan/zoom changes
+    useEffect( () => {
+        const timeout = setTimeout( () => {
+            try {
+                localStorage.setItem( 'flowEditorView', JSON.stringify({ pan, zoom }) );
+            } catch {}
+        }, 500 ); // Debounce
+        return () => clearTimeout( timeout );
+    }, [ pan, zoom ] );
     const [ containerSize, setContainerSize ] = useState({ width: 800, height: 600 });
     const [ isAnimating, setIsAnimating ] = useState( false );
     const [ hiddenTypes, setHiddenTypes ] = useState( new Set() ); // Types to hide
@@ -451,16 +470,6 @@ const FlowCanvas = () => {
         });
     }, [] );
 
-    // Reset to default layout (with animation)
-    const handleReset = useCallback( () => {
-        setIsAnimating( true );
-        setNodePositions({});
-        saveNodePositions({});
-        setPan({ x: 100, y: 80 });
-        setZoom( 0.5 );
-        setTimeout( () => setIsAnimating( false ), 600 );
-    }, [] );
-
     // Organize nodes using force-directed layout
     const handleOrganize = useCallback( () => {
         if ( ! nodes.length ) return;
@@ -590,23 +599,6 @@ const FlowCanvas = () => {
                             onMouseLeave={ e => e.currentTarget.style.background = 'transparent' }
                         >
                             Organize
-                        </button>
-                        <button
-                            onClick={ handleReset }
-                            style={{
-                                padding: '4px 12px',
-                                background: 'transparent',
-                                color: '#666',
-                                border: 'none',
-                                borderRadius: 4,
-                                fontSize: 11,
-                                fontWeight: 500,
-                                cursor: 'pointer',
-                            }}
-                            onMouseEnter={ e => e.currentTarget.style.background = '#f0f0f0' }
-                            onMouseLeave={ e => e.currentTarget.style.background = 'transparent' }
-                        >
-                            Reset
                         </button>
                     </div>
 
