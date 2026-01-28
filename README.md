@@ -14,6 +14,3 @@ Instead of editing one page at a time, Flow Editor lets you:
 - Double-click to edit in the native block editor
 - Return to the canvas with changes reflected
 
-## Inspiration
-
-Based on ideas from [Building the Web Beyond One Screen at a Time](https://designomattic.wordpress.com/2026/01/28/building-the-web-beyond-one-screen-at-a-time/) by Tino Barreiro.
