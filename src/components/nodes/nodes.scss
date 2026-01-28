@@ -1,0 +1,103 @@
+// Custom node styles.
+
+.flow-node {
+    background: #2d2d2d;
+    border: 2px solid #3d3d3d;
+    border-radius: 8px;
+    width: 220px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+
+    &:hover {
+        border-color: #4d4d4d;
+    }
+
+    &.selected {
+        border-color: #007cba;
+        box-shadow: 0 0 0 3px rgba(0, 124, 186, 0.25);
+    }
+}
+
+.flow-node-header {
+    padding: 8px 12px;
+    background: #252525;
+    border-bottom: 1px solid #3d3d3d;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.flow-node-type {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #888;
+}
+
+.flow-node-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.flow-node-preview {
+    height: 120px;
+    overflow: hidden;
+    background: #fff;
+    position: relative;
+
+    .block-editor-block-preview__container {
+        transform-origin: top left;
+    }
+}
+
+.node-preview {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.node-preview-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #888;
+    font-size: 12px;
+}
+
+// Node type colors.
+.flow-node-page {
+    .flow-node-type {
+        color: #4ab866;
+    }
+}
+
+.flow-node-pattern {
+    .flow-node-type {
+        color: #9b59b6;
+    }
+}
+
+.flow-node-template-part {
+    .flow-node-type {
+        color: #3498db;
+    }
+}
+
+// Handles.
+.react-flow__handle {
+    width: 8px;
+    height: 8px;
+    background: #666;
+    border: 2px solid #2d2d2d;
+
+    &.connecting,
+    &:hover {
+        background: #007cba;
+    }
+}
