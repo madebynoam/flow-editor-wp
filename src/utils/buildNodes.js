@@ -4,10 +4,10 @@
 
 // Layout constants
 const NODE_WIDTH = 280;
-const DEFAULT_NODE_HEIGHT = 200;
-const VERTICAL_GAP = 60;
+const DEFAULT_NODE_HEIGHT = 250;
+const VERTICAL_GAP = 180;
 const PATTERN_X = 50;
-const PAGE_X = 450;
+const PAGE_X = 550;
 
 /**
  * Build nodes array for React Flow.

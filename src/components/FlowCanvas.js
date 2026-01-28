@@ -11,22 +11,23 @@ import { saveNodePositions } from '../api';
 
 // Node dimensions
 const NODE_WIDTH = 280;
-const NODE_HEIGHT = 180;
-const SPACING_X = NODE_WIDTH + 120;
-const SPACING_Y = NODE_HEIGHT + 80;
+const NODE_HEIGHT = 220;
+const SPACING_X = NODE_WIDTH + 200;
+const SPACING_Y = NODE_HEIGHT + 150;
 const PREVIEW_WIDTH = 800; // BlockPreview viewport width
 
 /**
- * Force-directed layout algorithm (nature-inspired).
- * Arranges nodes in a clean grid with connected items grouped.
+ * Organize layout - spreads nodes in a balanced 3-column grid.
  */
-function forceDirectedLayout( nodes, edges ) {
+function organizeLayout( nodes ) {
     if ( ! nodes || nodes.length === 0 ) return {};
 
     const result = {};
+    const COL_WIDTH = 500;
+    const ROW_HEIGHT = SPACING_Y + 50; // Extra spacing for organize
 
     // Group nodes by type
-    const byType = { page: [], templatePart: [], pattern: [] };
+    const byType = { templatePart: [], pattern: [], page: [] };
     nodes.forEach( node => {
         const type = node.type || 'page';
         if ( byType[ type ] ) {
@@ -36,26 +37,19 @@ function forceDirectedLayout( nodes, edges ) {
         }
     });
 
-    // Layout: Template parts & patterns on left, pages on right
-    let leftY = 50;
-    let rightY = 50;
-
-    // Template parts first (top left)
+    // Column 1: Template parts
     byType.templatePart.forEach( ( node, i ) => {
-        result[ node.id ] = { x: 50, y: leftY };
-        leftY += SPACING_Y;
+        result[ node.id ] = { x: 50, y: 50 + i * ROW_HEIGHT };
     });
 
-    // Patterns below template parts
+    // Column 2: Patterns
     byType.pattern.forEach( ( node, i ) => {
-        result[ node.id ] = { x: 50, y: leftY };
-        leftY += SPACING_Y;
+        result[ node.id ] = { x: 50 + COL_WIDTH, y: 50 + i * ROW_HEIGHT };
     });
 
-    // Pages on the right
+    // Column 3: Pages
     byType.page.forEach( ( node, i ) => {
-        result[ node.id ] = { x: 450, y: rightY };
-        rightY += SPACING_Y;
+        result[ node.id ] = { x: 50 + COL_WIDTH * 2, y: 50 + i * ROW_HEIGHT };
     });
 
     return result;
@@ -463,7 +457,7 @@ const FlowCanvas = () => {
     const handleOrganize = useCallback( () => {
         if ( ! nodes.length ) return;
 
-        const newPositions = forceDirectedLayout( nodes, edges );
+        const newPositions = organizeLayout( nodes );
 
         // Validate positions before applying
         const validPositions = {};
