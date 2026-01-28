@@ -100,7 +100,7 @@ const FlowEditorPlugin = () => {
                         onClick={ handleClose }
                         aria-label="Close Flow View"
                     >
-                        <span className="dashicons dashicons-no-alt"></span>
+                        <span className="dashicons dashicons-no"></span>
                     </button>
                     <FlowCanvas />
                 </div>,
