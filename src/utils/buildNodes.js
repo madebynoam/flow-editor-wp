@@ -6,8 +6,10 @@
 const NODE_WIDTH = 280;
 const DEFAULT_NODE_HEIGHT = 250;
 const VERTICAL_GAP = 180;
+const HORIZONTAL_GAP = 350;
 const PATTERN_X = 50;
-const PAGE_X = 550;
+const PAGE_START_X = 550;
+const PAGES_PER_ROW = 3;
 
 /**
  * Build nodes array for React Flow.
@@ -34,15 +36,15 @@ export function buildNodes({ pages, templates, templateParts, patterns, position
     nodes.push({
         id: homeId,
         type: 'page',
-        position: homeSavedPos || { x: PAGE_X, y: pageY },
+        position: homeSavedPos || { x: PAGE_START_X, y: pageY },
         data: {
-            title: indexTemplate?.title?.rendered || 'Home',
+            title: indexTemplate?.title?.rendered || 'Front Page',
             content: indexTemplate?.content?.raw || '',
+            status: 'publish', // Templates are always published
             link: window.flowEditorData?.homeUrl || '/',
             editUrl: `${ siteEditor }?postType=wp_template&postId=${ encodeURIComponent( indexTemplate?.id || 'theme//index' ) }`,
         },
     });
-    pageY += DEFAULT_NODE_HEIGHT + VERTICAL_GAP;
 
     // Add template parts (top of patterns column).
     const ajaxUrl = window.ajaxurl || '/wp-admin/admin-ajax.php';
@@ -90,15 +92,22 @@ export function buildNodes({ pages, templates, templateParts, patterns, position
         patternY += DEFAULT_NODE_HEIGHT + VERTICAL_GAP;
     });
 
-    // Add pages (right column).
+    // Add pages in a grid (side by side).
     pages.forEach( ( page, index ) => {
         const id = `page-${ page.id }`;
         const savedPos = positions[ id ];
 
+        // Grid position: index 0 is Front Page, so actual pages start at index+1
+        const gridIndex = index + 1;
+        const col = gridIndex % PAGES_PER_ROW;
+        const row = Math.floor( gridIndex / PAGES_PER_ROW );
+        const x = PAGE_START_X + col * HORIZONTAL_GAP;
+        const y = 50 + row * ( DEFAULT_NODE_HEIGHT + VERTICAL_GAP );
+
         nodes.push({
             id,
             type: 'page',
-            position: savedPos || { x: PAGE_X, y: pageY },
+            position: savedPos || { x, y },
             data: {
                 title: page.title?.rendered || 'Untitled',
                 content: page.content?.raw || page.content?.rendered || '',
@@ -107,8 +116,6 @@ export function buildNodes({ pages, templates, templateParts, patterns, position
                 editUrl: `${ adminUrl }post.php?post=${ page.id }&action=edit`,
             },
         });
-
-        pageY += DEFAULT_NODE_HEIGHT + VERTICAL_GAP;
     });
 
     return nodes;

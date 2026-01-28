@@ -100,7 +100,7 @@ const FlowEditorPlugin = () => {
                         onClick={ handleClose }
                         aria-label="Close Flow View"
                     >
-                        <span className="dashicons dashicons-no"></span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 11.8l6.1-6.3-1-1-6.1 6.2-6.1-6.2-1 1 6.1 6.3-6.1 6.3 1 1 6.1-6.3 6.1 6.3 1-1z" fill="currentColor"/></svg>
                     </button>
                     <FlowCanvas />
                 </div>,
