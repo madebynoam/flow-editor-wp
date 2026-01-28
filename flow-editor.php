@@ -91,3 +91,52 @@ function flow_editor_admin_body_class( $classes ) {
     return $classes;
 }
 add_action( 'admin_body_class', 'flow_editor_admin_body_class' );
+
+/**
+ * Register REST API endpoint for saving/loading positions.
+ */
+function flow_editor_register_rest_routes() {
+    register_rest_route(
+        'flow-editor/v1',
+        '/positions',
+        array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => 'flow_editor_get_positions',
+                'permission_callback' => function() {
+                    return current_user_can( 'edit_theme_options' );
+                },
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => 'flow_editor_save_positions',
+                'permission_callback' => function() {
+                    return current_user_can( 'edit_theme_options' );
+                },
+            ),
+        )
+    );
+}
+add_action( 'rest_api_init', 'flow_editor_register_rest_routes' );
+
+/**
+ * Get saved node positions.
+ */
+function flow_editor_get_positions() {
+    $positions = get_option( 'flow_editor_positions', array() );
+    return rest_ensure_response( $positions );
+}
+
+/**
+ * Save node positions.
+ */
+function flow_editor_save_positions( $request ) {
+    $positions = $request->get_param( 'positions' );
+
+    if ( ! is_array( $positions ) ) {
+        return new WP_Error( 'invalid_data', 'Positions must be an array', array( 'status' => 400 ) );
+    }
+
+    update_option( 'flow_editor_positions', $positions );
+    return rest_ensure_response( array( 'success' => true ) );
+}
