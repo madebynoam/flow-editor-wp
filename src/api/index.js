@@ -4,20 +4,26 @@
 import apiFetch from '@wordpress/api-fetch';
 
 /**
- * Fetch all published pages.
+ * Fetch all published pages with raw content.
  */
 export async function fetchPages() {
     return apiFetch({
-        path: '/wp/v2/pages?per_page=100&status=publish',
+        path: '/wp/v2/pages?per_page=100&status=publish&context=edit',
+    }).catch( ( err ) => {
+        console.error( 'Flow Editor: Failed to fetch pages', err );
+        return [];
     });
 }
 
 /**
- * Fetch all template parts.
+ * Fetch all template parts with raw content.
  */
 export async function fetchTemplateParts() {
     return apiFetch({
-        path: '/wp/v2/template-parts?per_page=100',
+        path: '/wp/v2/template-parts?per_page=100&context=edit',
+    }).catch( ( err ) => {
+        console.error( 'Flow Editor: Failed to fetch template parts', err );
+        return [];
     });
 }
 
@@ -27,15 +33,21 @@ export async function fetchTemplateParts() {
 export async function fetchPatterns() {
     return apiFetch({
         path: '/wp/v2/block-patterns/patterns',
+    }).catch( ( err ) => {
+        console.error( 'Flow Editor: Failed to fetch patterns', err );
+        return [];
     });
 }
 
 /**
- * Fetch all templates.
+ * Fetch all templates with raw content.
  */
 export async function fetchTemplates() {
     return apiFetch({
-        path: '/wp/v2/templates?per_page=100',
+        path: '/wp/v2/templates?per_page=100&context=edit',
+    }).catch( ( err ) => {
+        console.error( 'Flow Editor: Failed to fetch templates', err );
+        return [];
     });
 }
 

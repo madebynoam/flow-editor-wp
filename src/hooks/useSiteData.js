@@ -30,11 +30,19 @@ export function useSiteData() {
                         fetchNodePositions(),
                     ]);
 
-                setPages( pagesData );
-                setTemplateParts( partsData );
-                setPatterns( patternsData );
-                setPositions( positionsData );
+                // Debug logging.
+                console.log( 'Flow Editor - Pages:', pagesData );
+                console.log( 'Flow Editor - Template Parts:', partsData );
+                console.log( 'Flow Editor - Patterns:', patternsData );
+                console.log( 'Flow Editor - Positions:', positionsData );
+
+                // Ensure arrays (API might return null/undefined on error).
+                setPages( Array.isArray( pagesData ) ? pagesData : [] );
+                setTemplateParts( Array.isArray( partsData ) ? partsData : [] );
+                setPatterns( Array.isArray( patternsData ) ? patternsData : [] );
+                setPositions( positionsData || {} );
             } catch ( err ) {
+                console.error( 'Flow Editor - Load error:', err );
                 setError( err.message || 'Failed to load site data' );
             } finally {
                 setLoading( false );
@@ -58,9 +66,9 @@ export function useSiteData() {
                 fetchTemplateParts(),
                 fetchPatterns(),
             ]).then( ([ p, tp, pt ]) => {
-                setPages( p );
-                setTemplateParts( tp );
-                setPatterns( pt );
+                setPages( Array.isArray( p ) ? p : [] );
+                setTemplateParts( Array.isArray( tp ) ? tp : [] );
+                setPatterns( Array.isArray( pt ) ? pt : [] );
                 setLoading( false );
             });
         },
