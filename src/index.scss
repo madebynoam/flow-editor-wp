@@ -1,0 +1,41 @@
+// Flow Editor styles.
+
+.flow-editor-page {
+    #wpcontent,
+    #wpbody,
+    #wpbody-content {
+        padding: 0;
+        margin: 0;
+    }
+
+    #wpfooter {
+        display: none;
+    }
+}
+
+.flow-editor-fullscreen {
+    position: fixed;
+    top: 32px;
+    left: 160px;
+    right: 0;
+    bottom: 0;
+    background: #1e1e1e;
+
+    @media (max-width: 782px) {
+        left: 0;
+        top: 46px;
+    }
+}
+
+.folded .flow-editor-fullscreen {
+    left: 36px;
+}
+
+.flow-editor-app {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+    padding: 20px;
+}
