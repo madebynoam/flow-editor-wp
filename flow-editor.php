@@ -37,13 +37,9 @@ function flow_editor_render_page() {
 }
 
 /**
- * Enqueue scripts and styles for the Flow Editor page.
+ * Enqueue scripts and styles for the Block Editor.
  */
-function flow_editor_enqueue_assets( $hook ) {
-    if ( 'appearance_page_flow-editor' !== $hook ) {
-        return;
-    }
-
+function flow_editor_enqueue_editor_assets() {
     $asset_file = FLOW_EDITOR_PLUGIN_DIR . 'build/index.asset.php';
 
     if ( ! file_exists( $asset_file ) ) {
@@ -52,19 +48,24 @@ function flow_editor_enqueue_assets( $hook ) {
 
     $asset = require $asset_file;
 
+    // Always bust cache in development - use file modification time.
+    $js_file = FLOW_EDITOR_PLUGIN_DIR . 'build/index.js';
+    $css_file = FLOW_EDITOR_PLUGIN_DIR . 'build/index.css';
+    $version = $asset['version'] . '.' . filemtime( $js_file );
+
     wp_enqueue_script(
         'flow-editor',
         FLOW_EDITOR_PLUGIN_URL . 'build/index.js',
         $asset['dependencies'],
-        $asset['version'],
+        $version,
         true
     );
 
     wp_enqueue_style(
         'flow-editor',
         FLOW_EDITOR_PLUGIN_URL . 'build/index.css',
-        array( 'wp-components' ),
-        $asset['version']
+        array( 'wp-components', 'wp-block-editor' ),
+        $version
     );
 
     // Pass data to JavaScript.
@@ -72,13 +73,16 @@ function flow_editor_enqueue_assets( $hook ) {
         'flow-editor',
         'flowEditorData',
         array(
-            'restUrl'   => rest_url(),
-            'nonce'     => wp_create_nonce( 'wp_rest' ),
+            'restUrl'    => rest_url(),
+            'nonce'      => wp_create_nonce( 'wp_rest' ),
+            'adminUrl'   => admin_url(),
             'siteEditor' => admin_url( 'site-editor.php' ),
+            'homeUrl'    => home_url( '/' ),
+            'siteTitle'  => get_bloginfo( 'name' ),
         )
     );
 }
-add_action( 'admin_enqueue_scripts', 'flow_editor_enqueue_assets' );
+add_action( 'enqueue_block_editor_assets', 'flow_editor_enqueue_editor_assets' );
 
 /**
  * Add body class for fullscreen styling.
@@ -93,9 +97,10 @@ function flow_editor_admin_body_class( $classes ) {
 add_action( 'admin_body_class', 'flow_editor_admin_body_class' );
 
 /**
- * Register REST API endpoint for saving/loading positions.
+ * Register REST API endpoints.
  */
 function flow_editor_register_rest_routes() {
+    // Positions endpoint.
     register_rest_route(
         'flow-editor/v1',
         '/positions',
@@ -116,8 +121,146 @@ function flow_editor_register_rest_routes() {
             ),
         )
     );
+
+    // Pattern preview endpoint.
+    register_rest_route(
+        'flow-editor/v1',
+        '/pattern-preview',
+        array(
+            'methods'             => 'GET',
+            'callback'            => 'flow_editor_pattern_preview',
+            'permission_callback' => function() {
+                return current_user_can( 'edit_theme_options' );
+            },
+            'args'                => array(
+                'name' => array(
+                    'required' => true,
+                    'type'     => 'string',
+                ),
+            ),
+        )
+    );
 }
 add_action( 'rest_api_init', 'flow_editor_register_rest_routes' );
+
+/**
+ * Handle pattern preview via admin-ajax (returns full HTML page).
+ */
+function flow_editor_ajax_pattern_preview() {
+    if ( ! current_user_can( 'edit_theme_options' ) ) {
+        wp_die( 'Unauthorized' );
+    }
+
+    $pattern_name = isset( $_GET['pattern'] ) ? sanitize_text_field( $_GET['pattern'] ) : '';
+
+    if ( empty( $pattern_name ) ) {
+        wp_die( 'Pattern name required' );
+    }
+
+    // Get registered patterns.
+    $patterns = WP_Block_Patterns_Registry::get_instance()->get_all_registered();
+    $pattern_content = null;
+
+    foreach ( $patterns as $pattern ) {
+        if ( $pattern['name'] === $pattern_name ) {
+            $pattern_content = $pattern['content'];
+            break;
+        }
+    }
+
+    if ( ! $pattern_content ) {
+        wp_die( 'Pattern not found' );
+    }
+
+    // Render the pattern content.
+    $rendered = do_blocks( $pattern_content );
+
+    // Output full HTML page with theme styles.
+    ?>
+    <!DOCTYPE html>
+    <html <?php language_attributes(); ?>>
+    <head>
+        <meta charset="<?php bloginfo( 'charset' ); ?>">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <?php wp_head(); ?>
+        <style>
+            body { margin: 0; padding: 20px; background: #fff; }
+            .wp-block-template-part { display: block; }
+            /* Hide submenus in preview */
+            .wp-block-navigation__submenu-container,
+            .sub-menu,
+            .wp-block-navigation-submenu {
+                display: none !important;
+            }
+        </style>
+    </head>
+    <body <?php body_class(); ?>>
+        <?php echo $rendered; ?>
+        <?php wp_footer(); ?>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+add_action( 'wp_ajax_flow_editor_pattern_preview', 'flow_editor_ajax_pattern_preview' );
+
+/**
+ * Handle template part preview via admin-ajax (returns full HTML page).
+ */
+function flow_editor_ajax_template_part_preview() {
+    if ( ! current_user_can( 'edit_theme_options' ) ) {
+        wp_die( 'Unauthorized' );
+    }
+
+    $slug = isset( $_GET['slug'] ) ? sanitize_text_field( $_GET['slug'] ) : '';
+    $theme = isset( $_GET['theme'] ) ? sanitize_text_field( $_GET['theme'] ) : get_stylesheet();
+
+    if ( empty( $slug ) ) {
+        wp_die( 'Template part slug required' );
+    }
+
+    // Get the template part.
+    $template_part = get_block_template( $theme . '//' . $slug, 'wp_template_part' );
+
+    if ( ! $template_part || empty( $template_part->content ) ) {
+        wp_die( 'Template part not found' );
+    }
+
+    // Render the template part content.
+    $rendered = do_blocks( $template_part->content );
+
+    // Output full HTML page with theme styles.
+    ?>
+    <!DOCTYPE html>
+    <html <?php language_attributes(); ?>>
+    <head>
+        <meta charset="<?php bloginfo( 'charset' ); ?>">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <?php wp_head(); ?>
+        <style>
+            body { margin: 0; padding: 20px; background: #fff; }
+            /* Hide submenus in preview */
+            .wp-block-navigation__submenu-container,
+            .sub-menu,
+            .wp-block-navigation-submenu,
+            .wp-block-navigation__responsive-container:not(.is-menu-open) .wp-block-navigation__submenu-container {
+                display: none !important;
+            }
+            /* Show only top-level nav items */
+            .wp-block-navigation-item.has-child > .wp-block-navigation-item__content {
+                display: inline-block;
+            }
+        </style>
+    </head>
+    <body <?php body_class(); ?>>
+        <?php echo $rendered; ?>
+        <?php wp_footer(); ?>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+add_action( 'wp_ajax_flow_editor_template_part_preview', 'flow_editor_ajax_template_part_preview' );
 
 /**
  * Get saved node positions.
@@ -141,108 +284,3 @@ function flow_editor_save_positions( $request ) {
     return rest_ensure_response( array( 'success' => true ) );
 }
 
-/**
- * Add Flow Editor link to editors (Site Editor and Post Editor).
- */
-function flow_editor_add_editor_links() {
-    global $pagenow;
-
-    $editor_pages = array( 'site-editor.php', 'post.php', 'post-new.php' );
-    if ( ! in_array( $pagenow, $editor_pages, true ) ) {
-        return;
-    }
-
-    $flow_editor_url = admin_url( 'themes.php?page=flow-editor' );
-
-    ?>
-    <script>
-    ( function() {
-        wp.domReady( function() {
-            const flowEditorUrl = '<?php echo esc_url( $flow_editor_url ); ?>';
-
-            // For Site Editor - add button to header.
-            const checkSiteEditor = setInterval( function() {
-                const header = document.querySelector( '.edit-site-site-hub' );
-                if ( ! header ) return;
-                if ( header.querySelector( '.flow-editor-launch-button' ) ) {
-                    clearInterval( checkSiteEditor );
-                    return;
-                }
-
-                clearInterval( checkSiteEditor );
-
-                const button = document.createElement( 'a' );
-                button.href = flowEditorUrl;
-                button.className = 'components-button is-tertiary flow-editor-launch-button';
-                button.textContent = 'Flow View';
-                button.style.cssText = 'margin-left: 8px; font-size: 12px;';
-                header.appendChild( button );
-            }, 500 );
-
-            // For Post/Page Editor - add to View menu.
-            const checkPostEditor = setInterval( function() {
-                // Look for the options menu (three dots menu).
-                const menuContent = document.querySelector( '.editor-more-menu__content, .interface-more-menu-dropdown__content' );
-                if ( ! menuContent ) return;
-
-                // Find the VIEW section.
-                const menuGroups = menuContent.querySelectorAll( '.components-menu-group' );
-                if ( ! menuGroups.length ) return;
-
-                // Check if we already added our item.
-                if ( menuContent.querySelector( '.flow-editor-menu-item' ) ) {
-                    return;
-                }
-
-                clearInterval( checkPostEditor );
-
-                // Find the first menu group (VIEW section).
-                const viewGroup = menuGroups[0];
-                if ( ! viewGroup ) return;
-
-                // Create menu item.
-                const menuItem = document.createElement( 'a' );
-                menuItem.href = flowEditorUrl;
-                menuItem.className = 'components-button components-menu-item__button flow-editor-menu-item';
-                menuItem.setAttribute( 'role', 'menuitem' );
-                menuItem.innerHTML = `
-                    <span class="components-menu-item__item">
-                        Flow view
-                    </span>
-                    <span class="components-menu-item__info">See site as connected system</span>
-                `;
-                menuItem.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; width: 100%; padding: 6px 12px; text-decoration: none; color: inherit;';
-
-                viewGroup.appendChild( menuItem );
-            }, 300 );
-
-            // Re-check when menu opens (it re-renders).
-            document.addEventListener( 'click', function( e ) {
-                if ( e.target.closest( '.editor-header__settings, .edit-post-more-menu' ) ) {
-                    setTimeout( function() {
-                        const menuContent = document.querySelector( '.editor-more-menu__content, .interface-more-menu-dropdown__content' );
-                        if ( menuContent && ! menuContent.querySelector( '.flow-editor-menu-item' ) ) {
-                            const menuGroups = menuContent.querySelectorAll( '.components-menu-group' );
-                            const viewGroup = menuGroups[0];
-                            if ( viewGroup ) {
-                                const menuItem = document.createElement( 'a' );
-                                menuItem.href = flowEditorUrl;
-                                menuItem.className = 'components-button components-menu-item__button flow-editor-menu-item';
-                                menuItem.setAttribute( 'role', 'menuitem' );
-                                menuItem.innerHTML = `
-                                    <span class="components-menu-item__item">Flow view</span>
-                                    <span class="components-menu-item__info">See site as connected system</span>
-                                `;
-                                menuItem.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; width: 100%; padding: 6px 12px; text-decoration: none; color: inherit;';
-                                viewGroup.appendChild( menuItem );
-                            }
-                        }
-                    }, 100 );
-                }
-            });
-        });
-    })();
-    </script>
-    <?php
-}
-add_action( 'admin_footer', 'flow_editor_add_editor_links' );

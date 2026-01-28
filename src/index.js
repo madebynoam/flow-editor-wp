@@ -1,32 +1,121 @@
 /**
- * Flow Editor - Main entry point.
+ * Flow Editor - Gutenberg editor integration.
+ * Adds toolbar button next to List View.
  */
-import { createRoot } from '@wordpress/element';
-import Canvas from './components/Canvas';
+import { registerPlugin } from '@wordpress/plugins';
+import { useState, createPortal, useEffect, useCallback } from '@wordpress/element';
+import { Button, Tooltip } from '@wordpress/components';
+import FlowCanvas from './components/FlowCanvas';
 import './index.scss';
 
-const App = () => {
+/**
+ * Flow Editor Plugin - Toolbar button with fullscreen canvas.
+ */
+const FlowEditorPlugin = () => {
+    const [ isOpen, setIsOpen ] = useState( false );
+    const [ isVisible, setIsVisible ] = useState( false );
+    const [ toolbarContainer, setToolbarContainer ] = useState( null );
+
+    const handleClose = useCallback( () => {
+        setIsVisible( false );
+        setTimeout( () => setIsOpen( false ), 200 ); // Wait for fade out
+    }, [] );
+
+    // Trigger fade in after mount
+    useEffect( () => {
+        if ( isOpen ) {
+            requestAnimationFrame( () => setIsVisible( true ) );
+        }
+    }, [ isOpen ] );
+
+    // Find toolbar container to inject button
+    useEffect( () => {
+        const findToolbar = () => {
+            // Try to find the document tools area (where List View button lives)
+            const selectors = [
+                '.editor-document-tools__left',
+                '.edit-post-header-toolbar__left',
+                '.editor-document-tools',
+                '.edit-post-header-toolbar',
+            ];
+
+            for ( const selector of selectors ) {
+                const el = document.querySelector( selector );
+                if ( el ) {
+                    setToolbarContainer( el );
+                    return;
+                }
+            }
+        };
+
+        // Try immediately and after a short delay (editor might not be ready)
+        findToolbar();
+        const timeout = setTimeout( findToolbar, 500 );
+        const timeout2 = setTimeout( findToolbar, 1500 );
+
+        return () => {
+            clearTimeout( timeout );
+            clearTimeout( timeout2 );
+        };
+    }, [] );
+
+    // Listen for Escape key when open
+    useEffect( () => {
+        if ( ! isOpen ) return;
+
+        const handleKeyDown = ( e ) => {
+            if ( e.key === 'Escape' ) {
+                e.preventDefault();
+                e.stopPropagation();
+                handleClose();
+            }
+        };
+
+        document.addEventListener( 'keydown', handleKeyDown, true );
+        return () => document.removeEventListener( 'keydown', handleKeyDown, true );
+    }, [ isOpen, handleClose ] );
+
+    // Toolbar button
+    const toolbarButton = toolbarContainer && createPortal(
+        <Tooltip text="Flow View">
+            <Button
+                className="flow-editor-toolbar-button"
+                icon="screenoptions"
+                onClick={ () => setIsOpen( true ) }
+                aria-label="Flow View"
+                isPressed={ isOpen }
+            />
+        </Tooltip>,
+        toolbarContainer
+    );
+
     return (
-        <div className="flow-editor-app">
-            <header className="flow-editor-header">
-                <h1>Flow Editor</h1>
-                <a
-                    href={ window.flowEditorData?.siteEditor || '#' }
-                    className="flow-editor-back-link"
-                >
-                    &larr; Site Editor
-                </a>
-            </header>
-            <Canvas />
-        </div>
+        <>
+            { toolbarButton }
+
+            { isOpen && createPortal(
+                <div className={ `flow-editor-fullscreen ${ isVisible ? 'is-visible' : '' }` }>
+                    <div className="flow-editor-header">
+                        <button
+                            className="flow-editor-close"
+                            onClick={ handleClose }
+                            aria-label="Close Flow View"
+                        >
+                            <span className="dashicons dashicons-no-alt"></span>
+                        </button>
+                        <h1>Flow View</h1>
+                        <div className="flow-editor-header-hint">
+                            Press <kbd>Esc</kbd> to close
+                        </div>
+                    </div>
+                    <FlowCanvas />
+                </div>,
+                document.body
+            )}
+        </>
     );
 };
 
-// Mount the app.
-document.addEventListener( 'DOMContentLoaded', () => {
-    const container = document.getElementById( 'flow-editor-root' );
-    if ( container ) {
-        const root = createRoot( container );
-        root.render( <App /> );
-    }
-});
+registerPlugin( 'flow-editor', {
+    render: FlowEditorPlugin,
+} );
