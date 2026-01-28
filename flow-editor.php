@@ -140,3 +140,42 @@ function flow_editor_save_positions( $request ) {
     update_option( 'flow_editor_positions', $positions );
     return rest_ensure_response( array( 'success' => true ) );
 }
+
+/**
+ * Add Flow Editor link to Site Editor.
+ */
+function flow_editor_add_site_editor_link() {
+    global $pagenow;
+
+    if ( 'site-editor.php' !== $pagenow ) {
+        return;
+    }
+
+    $flow_editor_url = admin_url( 'themes.php?page=flow-editor' );
+
+    ?>
+    <script>
+    ( function() {
+        wp.domReady( function() {
+            // Wait for Site Editor to fully load.
+            const checkInterval = setInterval( function() {
+                const header = document.querySelector( '.edit-site-site-hub' );
+                if ( ! header ) return;
+
+                clearInterval( checkInterval );
+
+                // Create Flow Editor button.
+                const button = document.createElement( 'a' );
+                button.href = '<?php echo esc_url( $flow_editor_url ); ?>';
+                button.className = 'components-button is-tertiary flow-editor-launch-button';
+                button.textContent = 'Flow View';
+                button.style.cssText = 'margin-left: 8px; font-size: 12px;';
+
+                header.appendChild( button );
+            }, 500 );
+        });
+    })();
+    </script>
+    <?php
+}
+add_action( 'admin_footer', 'flow_editor_add_site_editor_link' );
